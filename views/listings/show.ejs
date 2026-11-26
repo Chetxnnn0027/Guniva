@@ -1,0 +1,292 @@
+<% layout("/layouts/boilerplate") %>
+
+<script>
+  const mapToken = <%- JSON.stringify(process.env.MAP_TOKEN || "") %>;
+  const listing = <%- JSON.stringify({ title: listing.title, geometry: listing.geometry }) %>;
+</script>
+
+<div class="mt-4">
+  <!-- Header -->
+  <div class="show-header mb-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+      <% if (listing.category) { %>
+        <span class="badge rounded-pill text-bg-light border"><%= listing.category %></span>
+      <% } %>
+    </div>
+    <h1><%= listing.title %></h1>
+    <div class="show-meta">
+      <span><i class="fa-solid fa-location-dot me-1" style="color: var(--guniva-primary);"></i><%= listing.location %>, <%= listing.country %></span>
+      <% if (listing.reviews && listing.reviews.length > 0) { %>
+        <span>&middot;</span>
+        <span><i class="fa-solid fa-star me-1" style="color: var(--guniva-accent);"></i><%= listing.reviews.length %> <%= listing.reviews.length === 1 ? 'review' : 'reviews' %></span>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Hero Image -->
+  <div class="mb-4">
+    <img
+      src="<%= listing.image && listing.image.url ? listing.image.url : '/images/Guniva_logo.png' %>"
+      class="show-hero-img"
+      alt="<%= listing.title %>"
+    >
+  </div>
+
+  <!-- Details & Summary Card -->
+  <div class="row g-4 mb-5">
+    <div class="col-12 col-lg-8">
+      <div class="host-badge mb-4">
+        <div class="host-avatar">
+          <%= listing.owner && listing.owner.username ? listing.owner.username.charAt(0) : 'G' %>
+        </div>
+        <div>
+          <div class="fw-semibold">Hosted by <%= listing.owner && listing.owner.username ? listing.owner.username : 'Guniva Host' %></div>
+          <div class="text-muted small">Verified Guniva Listing</div>
+        </div>
+      </div>
+
+      <h4 class="fw-bold mb-2">About this place</h4>
+      <p class="text-muted mb-4" style="white-space: pre-line;"><%= listing.description %></p>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="show-summary-card">
+        <div class="d-flex align-items-baseline justify-content-between mb-3">
+          <div>
+            <span class="fs-4 fw-bold">&#8377;<%= (listing.price || 0).toLocaleString("en-IN") %></span>
+            <span class="text-muted"> / night</span>
+          </div>
+          <span class="text-muted small">+ 18% GST</span>
+        </div>
+
+        <hr>
+
+        <div class="small text-muted mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span>Location</span>
+            <span class="fw-semibold text-dark"><%= listing.location %></span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span>Country</span>
+            <span class="fw-semibold text-dark"><%= listing.country %></span>
+          </div>
+        </div>
+
+        <% if (currUser && listing.owner && listing.owner._id.equals(currUser._id)) { %>
+          <div class="d-grid gap-2 mt-3">
+            <a href="/listings/<%= listing._id %>/edit" class="btn btn-guniva">
+              <i class="fa-regular fa-pen-to-square me-1"></i>Edit Listing
+            </a>
+            <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" class="d-grid">
+              <button class="btn btn-guniva-secondary" type="submit">
+                <i class="fa-regular fa-trash-can me-1"></i>Delete Listing
+              </button>
+            </form>
+          </div>
+        <% } else if (currUser) { %>
+          <hr>
+          <div class="mb-3">
+            <label for="booking-nights" class="form-label">Number of nights</label>
+            <input type="number" id="booking-nights" class="form-control" value="1" min="1" max="30">
+          </div>
+          <div class="small text-muted mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>Stay (<span id="summary-nights">1</span> night)</span>
+              <span>&#8377;<span id="summary-subtotal"><%= (listing.price || 0).toLocaleString("en-IN") %></span></span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+              <span>GST (18%)</span>
+              <span>&#8377;<span id="summary-gst"><%= Math.round((listing.price || 0) * 0.18).toLocaleString("en-IN") %></span></span>
+            </div>
+            <hr class="my-2">
+            <div class="d-flex justify-content-between fw-bold text-dark fs-6">
+              <span>Total</span>
+              <span>&#8377;<span id="summary-total"><%= Math.round((listing.price || 0) * 1.18).toLocaleString("en-IN") %></span></span>
+            </div>
+          </div>
+          <button type="button" id="reserve-pay-btn" class="btn btn-guniva w-100">
+            <i class="fa-solid fa-lock me-1"></i>Reserve &amp; Pay
+          </button>
+          <div id="booking-error" class="text-danger small mt-2 d-none"></div>
+        <% } else { %>
+          <a href="/login" class="btn btn-guniva w-100">Log in to Reserve</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reviews Section -->
+  <div id="reviews-section" class="mb-5">
+    <hr class="mb-4">
+
+    <% if (currUser) { %>
+      <div class="form-card mb-4">
+        <h4 class="fw-bold mb-3">Leave a Review</h4>
+        <form action="/listings/<%= listing._id %>/reviews" method="POST" novalidate class="needs-validation">
+          <div class="mb-3">
+            <label for="rating" class="form-label d-block">Rating</label>
+            <fieldset class="starability-slot">
+              <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
+              <input type="radio" id="first-rate1" name="review[rating]" value="1" />
+              <label for="first-rate1" title="Terrible">1 star</label>
+              <input type="radio" id="first-rate2" name="review[rating]" value="2" />
+              <label for="first-rate2" title="Not good">2 stars</label>
+              <input type="radio" id="first-rate3" name="review[rating]" value="3" />
+              <label for="first-rate3" title="Average">3 stars</label>
+              <input type="radio" id="first-rate4" name="review[rating]" value="4" />
+              <label for="first-rate4" title="Very good">4 stars</label>
+              <input type="radio" id="first-rate5" name="review[rating]" value="5" />
+              <label for="first-rate5" title="Amazing">5 stars</label>
+            </fieldset>
+          </div>
+
+          <div class="mb-3">
+            <label for="comment" class="form-label">Comment</label>
+            <textarea name="review[comment]" required class="form-control" id="comment" rows="3" placeholder="Share your experience with this stay..."></textarea>
+            <div class="invalid-feedback">Please submit a comment for your review.</div>
+          </div>
+
+          <button class="btn btn-guniva" type="submit">Submit Review</button>
+        </form>
+      </div>
+    <% } %>
+
+    <h4 class="fw-bold mb-3">
+      Guest Reviews (<%= listing.reviews ? listing.reviews.length : 0 %>)
+    </h4>
+
+    <% if (listing.reviews && listing.reviews.length > 0) { %>
+      <div class="row row-cols-1 row-cols-md-2 g-3">
+        <% for (const review of listing.reviews) { %>
+          <div class="col">
+            <div class="review-card d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="host-avatar" style="width: 34px; height: 34px; font-size: 0.85rem;">
+                      <%= review.author && review.author.username ? review.author.username.charAt(0) : 'U' %>
+                    </div>
+                    <div>
+                      <div class="fw-semibold"><%= review.author && review.author.username ? review.author.username : 'Guest' %></div>
+                      <% if (review.createdAt) { %>
+                        <div class="text-muted" style="font-size: 0.75rem;"><%= new Date(review.createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) %></div>
+                      <% } %>
+                    </div>
+                  </div>
+                  <p class="starability-result m-0" data-rating="<%= review.rating %>"></p>
+                </div>
+                <p class="text-muted mb-3"><%= review.comment %></p>
+              </div>
+
+              <% if (currUser && review.author && review.author._id.equals(currUser._id)) { %>
+                <form action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" method="POST">
+                  <button class="btn btn-sm btn-outline-danger rounded-pill" type="submit">Delete</button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    <% } else { %>
+      <p class="text-muted">No reviews yet. Be the first to share your experience!</p>
+    <% } %>
+  </div>
+
+  <!-- Map Section -->
+  <div class="mb-4">
+    <h4 class="fw-bold mb-3">Where you'll be</h4>
+    <div id="map"></div>
+  </div>
+</div>
+
+<script src="/js/map.js"></script>
+<% if (currUser && !(listing.owner && listing.owner._id.equals(currUser._id))) { %>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    (() => {
+      const pricePerNight = <%= Number(listing.price || 0) %>;
+      const nightsInput = document.getElementById("booking-nights");
+      const summaryNights = document.getElementById("summary-nights");
+      const summarySubtotal = document.getElementById("summary-subtotal");
+      const summaryGst = document.getElementById("summary-gst");
+      const summaryTotal = document.getElementById("summary-total");
+      const payBtn = document.getElementById("reserve-pay-btn");
+      const errorBox = document.getElementById("booking-error");
+
+      function updatePriceSummary() {
+        const nights = Math.max(1, parseInt(nightsInput.value, 10) || 1);
+        nightsInput.value = nights;
+        const subtotal = pricePerNight * nights;
+        const gst = Math.round(subtotal * 0.18);
+        const total = subtotal + gst;
+        summaryNights.textContent = nights;
+        summarySubtotal.textContent = subtotal.toLocaleString("en-IN");
+        summaryGst.textContent = gst.toLocaleString("en-IN");
+        summaryTotal.textContent = total.toLocaleString("en-IN");
+      }
+
+      if (nightsInput) {
+        nightsInput.addEventListener("input", updatePriceSummary);
+      }
+
+      if (payBtn) {
+        payBtn.addEventListener("click", async () => {
+          errorBox.classList.add("d-none");
+          payBtn.disabled = true;
+          payBtn.textContent = "Creating order...";
+
+          try {
+            const nights = Math.max(1, parseInt(nightsInput.value, 10) || 1);
+            const res = await fetch("/listings/<%= listing._id %>/bookings/create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nights })
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+              throw new Error(data.message || "Could not start payment");
+            }
+
+            const options = {
+              key: data.keyId,
+              amount: data.order.amount,
+              currency: data.order.currency,
+              name: "Guniva",
+              description: "<%= listing.title.replace(/\"/g, '') %>",
+              order_id: data.order.id,
+              prefill: {
+                name: "<%= currUser.username %>",
+                email: "<%= currUser.email %>"
+              },
+              theme: { color: "#FE424D" },
+              handler: async function (response) {
+                const verifyRes = await fetch("/bookings/verify", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(response)
+                });
+                const verifyData = await verifyRes.json();
+                if (verifyRes.ok && verifyData.success) {
+                  window.location.reload();
+                } else {
+                  errorBox.textContent = verifyData.message || "Payment verification failed.";
+                  errorBox.classList.remove("d-none");
+                }
+              }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+          } catch (err) {
+            errorBox.textContent = err.message;
+            errorBox.classList.remove("d-none");
+          } finally {
+            payBtn.disabled = false;
+            payBtn.innerHTML = '<i class="fa-solid fa-lock me-1"></i>Reserve &amp; Pay';
+          }
+        });
+      }
+    })();
+  </script>
+<% } %>

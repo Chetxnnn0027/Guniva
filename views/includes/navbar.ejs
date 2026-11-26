@@ -1,0 +1,47 @@
+<nav class="navbar navbar-expand-lg guniva-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="/listings">
+      <img src="/images/Guniva_logo.png" alt="Guniva logo" class="brand-logo">
+      <span>Guniva</span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <div class="navbar-nav me-lg-3">
+        <a class="nav-link guniva-nav-link" href="/listings">Explore</a>
+      </div>
+
+      <form class="guniva-search-form mx-auto" action="/listings" method="GET" role="search">
+        <input
+          class="guniva-search-input"
+          type="search"
+          name="q"
+          value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>"
+          placeholder="Search destinations, titles, or countries..."
+          aria-label="Search destinations"
+        >
+        <button class="btn guniva-search-btn" type="submit">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Search</span>
+        </button>
+      </form>
+
+      <div class="navbar-nav ms-auto align-items-lg-center gap-2 mt-2 mt-lg-0">
+        <a class="nav-link guniva-nav-link" href="/listings/new">Host your home</a>
+        <button type="button" id="theme-toggle" class="btn theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark/light mode">
+          <i id="theme-icon" class="fa-solid fa-moon"></i>
+        </button>
+        <% if (!currUser) { %>
+          <a class="nav-link guniva-nav-link" href="/login">Log In</a>
+          <a class="nav-link guniva-nav-cta" href="/signup">Sign Up</a>
+        <% } else { %>
+          <span class="nav-link text-muted small d-none d-lg-inline">Hi, <strong><%= currUser.username %></strong></span>
+          <a class="nav-link guniva-nav-link" href="/logout">Log Out</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</nav>

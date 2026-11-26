@@ -1,0 +1,107 @@
+<% layout("/layouts/boilerplate") %>
+
+<%
+  const categories = [
+    { name: "Trending", icon: "fa-solid fa-fire" },
+    { name: "Rooms", icon: "fa-solid fa-bed" },
+    { name: "Mountains", icon: "fa-solid fa-mountain" },
+    { name: "Iconic Cities", icon: "fa-solid fa-mountain-city" },
+    { name: "Castles", icon: "fa-brands fa-fort-awesome" },
+    { name: "Amazing Pools", icon: "fa-solid fa-person-swimming" },
+    { name: "Camping", icon: "fa-solid fa-tents" },
+    { name: "Farms", icon: "fa-solid fa-tractor" },
+    { name: "Arctic", icon: "fa-regular fa-snowflake" },
+    { name: "Domes", icon: "fa-solid fa-igloo" }
+  ];
+%>
+
+<div class="filters-bar">
+  <div class="filters-scroll">
+    <a href="/listings<%= searchQuery ? '?q=' + encodeURIComponent(searchQuery) : '' %>" class="filter-item <%= !activeCategory ? 'active' : '' %>">
+      <i class="fa-solid fa-border-all"></i>
+      <span>All</span>
+    </a>
+    <% for (const cat of categories) { %>
+      <a
+        href="/listings?category=<%= encodeURIComponent(cat.name) %><%= searchQuery ? '&q=' + encodeURIComponent(searchQuery) : '' %>"
+        class="filter-item <%= activeCategory === cat.name ? 'active' : '' %>"
+      >
+        <i class="<%= cat.icon %>"></i>
+        <span><%= cat.name %></span>
+      </a>
+    <% } %>
+  </div>
+
+  <div class="tax-toggle">
+    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+      <input class="form-check-input m-0" type="checkbox" role="switch" id="flexSwitchCheckDefault">
+      <label class="form-check-label" for="flexSwitchCheckDefault">Display total after taxes</label>
+    </div>
+  </div>
+</div>
+
+<% if (searchQuery || activeCategory) { %>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <p class="text-muted mb-0 small">
+      Showing <strong><%= allListings.length %></strong> <%= allListings.length === 1 ? 'stay' : 'stays' %>
+      <% if (activeCategory) { %> in <strong><%= activeCategory %></strong><% } %>
+      <% if (searchQuery) { %> matching "<strong><%= searchQuery %></strong>"<% } %>
+    </p>
+    <a href="/listings" class="btn btn-sm btn-outline-secondary rounded-pill">Clear filters</a>
+  </div>
+<% } %>
+
+<% if (allListings.length === 0) { %>
+  <div class="empty-state mt-3">
+    <div class="mb-3" style="font-size: 2.25rem; color: var(--guniva-primary);">
+      <i class="fa-regular fa-compass"></i>
+    </div>
+    <h4 class="fw-bold mb-2">No stays found</h4>
+    <p class="text-muted mb-4">Try adjusting your search or exploring another category.</p>
+    <a href="/listings" class="btn btn-guniva">View all stays</a>
+  </div>
+<% } else { %>
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+    <% for (const listing of allListings) { %>
+      <div class="col">
+        <a href="/listings/<%= listing._id %>" class="listing-link">
+          <div class="listing-card">
+            <div class="listing-img-wrap">
+              <img
+                src="<%= listing.image && listing.image.url ? listing.image.url : '/images/Guniva_logo.png' %>"
+                alt="<%= listing.title %>"
+                loading="lazy"
+              >
+              <% if (listing.category) { %>
+                <span class="listing-category-badge"><%= listing.category %></span>
+              <% } %>
+            </div>
+            <div class="listing-card-body">
+              <h5 class="listing-card-title"><%= listing.title %></h5>
+              <p class="listing-card-location">
+                <i class="fa-solid fa-location-dot me-1"></i><%= listing.location %>, <%= listing.country %>
+              </p>
+              <p class="listing-card-price">
+                &#8377;<%= (listing.price || 0).toLocaleString("en-IN") %>
+                <span class="price-unit">/ night</span>
+                <span class="tax-info">&nbsp;+ 18% GST</span>
+              </p>
+            </div>
+          </div>
+        </a>
+      </div>
+    <% } %>
+  </div>
+<% } %>
+
+<script>
+  const taxSwitch = document.getElementById("flexSwitchCheckDefault");
+  if (taxSwitch) {
+    taxSwitch.addEventListener("change", () => {
+      const taxInfos = document.getElementsByClassName("tax-info");
+      for (const info of taxInfos) {
+        info.style.display = taxSwitch.checked ? "inline" : "none";
+      }
+    });
+  }
+</script>
